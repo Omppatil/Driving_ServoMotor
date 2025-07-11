@@ -1,0 +1,94 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              07/11/2025 17:18:40 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <intrins.h>
+   3          
+   4          // === Pin Definitions ===
+   5          sbit SERVO = P2^0;
+   6          sbit START_BTN = P3^2;   // Active LOW
+   7          
+   8          // === Delay Functions ===
+   9          void delay_us(unsigned int us) {
+  10   1          while (us--) {
+  11   2              _nop_(); _nop_(); _nop_(); _nop_(); _nop_();
+  12   2          }
+  13   1      }
+  14          
+  15          void delay_ms(unsigned int ms) {
+  16   1          unsigned int i, j;
+  17   1          for (i = 0; i < ms; i++)
+  18   1              for (j = 0; j < 1275; j++);
+  19   1      }
+  20          
+  21          // === Servo PWM Pulse (one 20ms cycle) ===
+  22          void servoPulse(unsigned int high_time_us) {
+  23   1          SERVO = 1;
+  24   1          delay_us(high_time_us);
+  25   1          SERVO = 0;
+  26   1          delay_ms(18);  // To complete ~20ms
+  27   1      }
+  28          
+  29          void main() {
+  30   1          unsigned int angle_us = 1000;
+  31   1          bit direction = 0;       // 0 = increase, 1 = decrease
+  32   1          bit is_started = 0;      // Flag to check if button was pressed
+  33   1          unsigned char i;
+  34   1      
+  35   1          P3 |= 0x04;  // Enable internal pull-up for P3.2
+  36   1      
+  37   1          while (1) {
+  38   2              // Check for one-time button press
+  39   2              if (START_BTN == 0 && !is_started) {
+  40   3                  delay_ms(20);  // Debounce
+  41   3                  if (START_BTN == 0) {
+  42   4                      is_started = 1;
+  43   4                  }
+  44   3              }
+  45   2      
+  46   2              // Once started, sweep continuously
+  47   2              if (is_started) {
+  48   3                  if (direction == 0) {
+  49   4                      angle_us += 100;
+  50   4                      if (angle_us >= 2000) {
+  51   5                          angle_us = 2000;
+  52   5                          direction = 1;
+  53   5                      }
+  54   4                  } else {
+C51 COMPILER V9.60.7.0   MAIN                                                              07/11/2025 17:18:40 PAGE 2   
+
+  55   4                      angle_us -= 100;
+  56   4                      if (angle_us <= 1000) {
+  57   5                          angle_us = 1000;
+  58   5                          direction = 0;
+  59   5                      }
+  60   4                  }
+  61   3      
+  62   3                  // Send 10 pulses at current angle
+  63   3                  for (i = 0; i < 10; i++) {
+  64   4                      servoPulse(angle_us);
+  65   4                  }
+  66   3              }
+  67   2          }
+  68   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    173    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
